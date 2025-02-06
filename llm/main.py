@@ -8,7 +8,7 @@ from runner import Runner
 
 
 DATA_PATH = "data/game_of_thrones.txt"
-MODEL_PATH = "model/game_of_thrones.pth"
+MODEL_PATH = "models/game_of_thrones.pth"
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Train a language model")
@@ -38,6 +38,9 @@ def train():
     print(f'First 32 characters: {text[:32]}')
     # Create dataset
     dataset = TextDataset(text=text, tokenizer=tokenizer, block_size=config.block_size)
+    if len(dataset) == 0:
+        print("Dataset is empty. Please check your dataset.")
+        return
     print(f"Created dataset of {len(dataset)} sequences")
     
     # Initialize model
@@ -65,7 +68,9 @@ def evaluate(text:str = "Khaleesi saw jon snow and"):
     model.load_state_dict(torch.load(MODEL_PATH))
     model.eval()
     runner = Runner(model=model, dataset=None, config=config)
-    runner.generate(text)
+    result = runner.generate(text)
+    print('Generated text:\n')
+    print(result)
 
 if __name__ == "__main__":
     args = parse_args()

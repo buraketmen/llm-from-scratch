@@ -48,7 +48,7 @@ class Runner:
                     pbar.update(1)
                     pbar.set_postfix({'loss': f'{loss.item():.4f}'})
                     
-    def generate(self, prompt, max_tokens=128):
+    def generate(self, prompt, max_tokens=256):
         self.model.eval()
         # No need to self.dataset?
         tokenizer = Tokenizer()
@@ -56,17 +56,19 @@ class Runner:
         tokens = torch.tensor(tokens).unsqueeze(0).to(self.config.device)
         
         with torch.no_grad():
-            for _ in range(max_tokens):
-                # Get predictions
-                logits = self.model(tokens[:, -self.config.block_size:])
-                logits = logits[:, -1, :] # Get predictions for last token
-                probs = F.softmax(logits, dim=-1) # Calculate probabilities
-                
-                next_token = torch.multinomial(probs, num_samples=1) # Sample from distribution
-                tokens = torch.cat([tokens, next_token], dim=1) # Add to sequence
-                
-                # If end of text token is generated, stop
-                if next_token.item() == tokenizer.encode("<|endoftext|>")[0]:
-                    break
+            with tqdm(total=max_tokens, desc="Generating") as pbar:
+                for _ in range(max_tokens):
+                    # Get predictions
+                    logits = self.model(tokens[:, -self.config.block_size:])
+                    logits = logits[:, -1, :] # Get predictions for last token
+                    probs = F.softmax(logits, dim=-1) # Calculate probabilities
+                    
+                    next_token = torch.multinomial(probs, num_samples=1) # Sample from distribution
+                    tokens = torch.cat([tokens, next_token], dim=1) # Add to sequence
+                    
+                    # If end of text token is generated, stop
+                    pbar.update(1)
+                    if next_token.item() == tokenizer.encode("<|endoftext|>")[0]:
+                        break
         
         return tokenizer.decode(tokens.squeeze(0).tolist())

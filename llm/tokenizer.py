@@ -7,7 +7,7 @@ class Tokenizer:
     
     def encode(self, text):
         # Convert text to token ids
-        return self.encoding.encode(text)
+        return self.encoding.encode(text, allowed_special={'<|endoftext|>'})
     
     def decode(self, token_ids):
         # Convert token ids back to text
